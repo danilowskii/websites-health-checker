@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"health-checker-website/websites"
-
 	"time"
+	"websites-health-checker/websites"
 )
 
 const TimeSleep = 3

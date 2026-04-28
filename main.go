@@ -52,6 +52,7 @@ func chooseOption() bool {
 
 	switch userChoice {
 	case 1:
+		websites.DeleteLogs()
 		fmt.Println("===========================================================")
 		fmt.Println("1 - Monitoring your websites...")
 		fmt.Println("")
@@ -61,6 +62,14 @@ func chooseOption() bool {
 	case 2:
 		fmt.Println("===========================================================")
 		fmt.Println("2 - Checking your last log...")
+		fmt.Println("")
+		response := websites.ReadLogs()
+		for i := 0; i < len(response); i++ {
+			
+			fmt.Println(response[i])
+			
+		}
+		fmt.Println("")
 	case 0:
 		fmt.Println("===========================================================")
 		fmt.Println("0 - Exiting program...")

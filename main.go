@@ -18,7 +18,7 @@ func main() {
 		running = chooseOption()
 		timeSleep(TimeSleep)
 		}
-	footer()
+	
 }
 
 // Structure
@@ -47,11 +47,12 @@ func chooseOption() bool {
 	_, err := fmt.Scan(&userChoice)
 	
 	if err != nil {
-		fmt.Println("===========================================================")
-		fmt.Println("ERROR - Invalid option. Wait 3 seconds...")
-		timeSleep(TimeSleep)
-		return true
-	}
+	fmt.Println("ERROR - Invalid option. Wait 3 seconds...")
+	var discard string
+	fmt.Scanln(&discard)
+	timeSleep(TimeSleep)
+	return true
+}
 
 	switch userChoice {
 	case 1:
@@ -101,6 +102,9 @@ func chooseOption() bool {
 	case 0:
 		fmt.Println("===========================================================")
 		fmt.Println("0 - Exiting program...")
+		footer()
+		fmt.Println("Press ENTER to close...")
+		fmt.Scanln()
 		return false
 	default:
 		fmt.Println("===========================================================")

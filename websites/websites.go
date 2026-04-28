@@ -20,6 +20,9 @@ func Check() []string {
 	if err != nil {
 		fmt.Println("ERROR: ", err)
 	}
+	if len(websitesList) == 0 {
+		fmt.Println("No websites to show. Please add a website to start monitoring.")
+	}
 	
 	for idx, site := range websitesList {
 		result, err := http.Get(site)
@@ -124,7 +127,7 @@ func ReadLogs() []string {
 		fmt.Println("ERROR: ", err)
 		return logs
 	}
-
+	
 	path := filepath.Join(home, "logs.txt")
 	file, err := os.Open(path)
 
@@ -138,6 +141,7 @@ func ReadLogs() []string {
 	for {
 		row, err := reader.ReadString('\n')
 		row = strings.TrimSpace(row)
+		
 		if row != "" {
 			logs = append(logs, row)
 		}
@@ -148,6 +152,9 @@ func ReadLogs() []string {
 			fmt.Println("ERROR reading logs:", err)
 			break
 		}
+	}
+	if len(logs) == 0 {
+		fmt.Println("No logs to show. Please start monitoring to see logs.")
 	}
 	return logs
 }
@@ -249,6 +256,4 @@ func DeleteWebsiteById(urlId string) {
 	fmt.Println("")
 	fmt.Printf("Website ID %d was successfully deleted! \n", converted)
 	fmt.Println("")
-	
-
 }

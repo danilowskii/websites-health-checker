@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -44,35 +46,59 @@ func Check() []string {
 
 func readFile() ([]string, error) {
 	var websites []string
-	file, err := os.Open("websites/websites.txt ")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return nil, err
+	}
+	path := filepath.Join(home, "websites.txt")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		file, _ := os.Create(path)
+		file.WriteString("https://google.com\n")
+		file.Close()
+	}
+	file, err := os.Open(path)
 
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
-	readFile := bufio.NewReader(file)
+	reader := bufio.NewReader(file)
 
 	for {
-		row, err := readFile.ReadString('\n')
+		row, err := reader.ReadString('\n')
 		row = strings.TrimSpace(row)
 
-		websites = append(websites, row)
+		if row != "" {
+			websites = append(websites, row)
+		}
 
 		if err == io.EOF {
 			break 
 		}
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	file.Close()
-	return websites, err
+	return websites, nil
 }
 
 func writeLogs(site string, statusCode int) {
-	file, err := os.OpenFile("websites/logs.txt", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	home, err := os.UserHomeDir()
+	if err != nil {
+	fmt.Println("ERROR:", err)
+	return 
+	}
+	path := filepath.Join(home, "logs.txt")
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 
 	if err != nil {
 		fmt.Println("ERROR: ", err)
+		return
 	}
+	defer file.Close()
 
 	color := "\033[31m- UNHEALTHY\033[0m"
 
@@ -83,39 +109,146 @@ func writeLogs(site string, statusCode int) {
 	}
 
 	file.WriteString(fmt.Sprintf(
-	"%s - %s STATUS: %d %s\n",
+	"%s - %-45s STATUS: %d %s\n",
 	time.Now().Format("02/Jan/2006 15:04:05"),
 	site,
 	statusCode,
 	color,
 ))
-	
-	
-	file.Close()
 }
 
 func ReadLogs() []string {
-	var websites []string
-	file, err := os.Open("websites/logs.txt")
+	var logs []string
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return logs
+	}
+
+	path := filepath.Join(home, "logs.txt")
+	file, err := os.Open(path)
 
 	if err != nil {
 		fmt.Println("ERROR: ", err)
+		return logs
 	}
+	defer file.Close()
 
-	readFile := bufio.NewReader(file)
+	reader := bufio.NewReader(file)
 	for {
-		row, err := readFile.ReadString('\n')
+		row, err := reader.ReadString('\n')
+		row = strings.TrimSpace(row)
+		if row != "" {
+			logs = append(logs, row)
+		}
 		if err == io.EOF {
 			break
 		}
-
-		row = strings.TrimSpace(row)
-		websites = append(websites, row)
+		if err != nil {
+			fmt.Println("ERROR reading logs:", err)
+			break
+		}
 	}
-	file.Close()
-	return websites
+	return logs
 }
 
-func DeleteLogs() {
-	os.Remove("websites/logs.txt")
+func ClearLogs() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
+
+	path := filepath.Join(home, "logs.txt")
+
+	file, err := os.Create(path) 
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
+	defer file.Close()
+}
+
+func AddWebsite(websiteUrl string) {
+	u, err := url.ParseRequestURI(strings.TrimSpace(websiteUrl))
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		fmt.Println("Invalid URL. Recommended url structure: 'https://google.com'. ")
+		return
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
+	}
+
+	path := filepath.Join(home, "websites.txt")
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
+	}
+	defer file.Close()
+
+	file.WriteString(websiteUrl + "\n")
+	fmt.Println("")
+	fmt.Println("Website was successfully added!")
+	fmt.Println("")
+}
+
+func ListAllWebsites()  {
+	websites, err := readFile()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return 
+	}
+	if len(websites) == 0 {
+		fmt.Println("No websites found.")
+		return
+	}
+	for i, site := range websites {
+		fmt.Printf("%d - %s\n", i+1, site)
+	}
+	fmt.Println("")
+}
+
+func DeleteWebsiteById(urlId string) {
+	converted, err := strconv.Atoi(urlId)
+	if err != nil {
+		fmt.Printf("ERROR: ID '%s' isn't valid. Please enter a valid ID. \n", urlId)
+		return
+	}	
+	websites, err := readFile()
+	if err!= nil {
+		fmt.Println("ERROR: ", err)
+		return 
+	}
+	if len(websites) == 0 {
+		fmt.Println("No websites found.")
+		return
+	}
+	index := converted - 1
+	if index < 0 || index >= len(websites) {
+		fmt.Println("ERROR: ID out of range.")
+		return
+	}
+	websites = append(websites[:index], websites[index+1:]...)
+	home, _ := os.UserHomeDir()
+	path := filepath.Join(home, "websites.txt")
+
+	file, err := os.Create(path) // sobrescreve tudo
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
+	defer file.Close()
+
+	for _, site := range websites {
+		file.WriteString(site + "\n")
+	}
+	
+	fmt.Println("")
+	fmt.Printf("Website ID %d was successfully deleted! \n", converted)
+	fmt.Println("")
+	
+
 }

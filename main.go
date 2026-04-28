@@ -6,7 +6,7 @@ import (
 	"websites-health-checker/websites"
 )
 
-const TimeSleep = 3
+const TimeSleep = 2
 
 func main() {
 	introduction()
@@ -35,6 +35,9 @@ func mainMenu() {
 	fmt.Println("========================= MENU ============================")
 	fmt.Println("1 - Check websites")
 	fmt.Println("2 - Consult log")
+	fmt.Println("3 - Add a new website")
+	fmt.Println("4 - List websites")
+	fmt.Println("5 - Delete a website")
 	fmt.Println("0 - Exit program")
 	fmt.Println("===========================================================")
 }
@@ -52,7 +55,7 @@ func chooseOption() bool {
 
 	switch userChoice {
 	case 1:
-		websites.DeleteLogs()
+		websites.ClearLogs()
 		fmt.Println("===========================================================")
 		fmt.Println("1 - Monitoring your websites...")
 		fmt.Println("")
@@ -65,11 +68,36 @@ func chooseOption() bool {
 		fmt.Println("")
 		response := websites.ReadLogs()
 		for i := 0; i < len(response); i++ {
-			
 			fmt.Println(response[i])
-			
 		}
 		fmt.Println("")
+	case 3:
+		fmt.Println("===========================================================")
+		fmt.Println("3 - Adding website to list...")
+		fmt.Println("")
+		fmt.Printf("Enter a website: ")
+		var websiteUrl string
+		_, err := fmt.Scan(&websiteUrl)
+		if err!= nil {
+			fmt.Println("ERROR: ", err)
+		}
+		websites.AddWebsite(websiteUrl)
+	case 4:
+		fmt.Println("===========================================================")
+		fmt.Println("4 - Listing all wesbites...")
+		fmt.Println("")
+		websites.ListAllWebsites()
+	case 5:
+		fmt.Println("===========================================================")
+		fmt.Println("3 - Deleting website...")
+		fmt.Println("")
+		fmt.Printf("Enter a website ID: ")
+		var urlId string
+		_, err := fmt.Scan(&urlId)
+		if err != nil {
+			fmt.Println("ERROR: ", err)
+		}
+		websites.DeleteWebsiteById(urlId)
 	case 0:
 		fmt.Println("===========================================================")
 		fmt.Println("0 - Exiting program...")
